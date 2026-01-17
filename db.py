@@ -51,11 +51,19 @@ class Database:
                 else:
                     raise ConnectionError("Could not connect to MongoDB.")
 
-    def is_user_authorized(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot") -> bool:
+        def is_user_authorized(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot") -> bool:
         if user_id == OWNER_ID or user_id in ADMINS: return True
         user = self.users.find_one({"user_id": user_id})
         if not user or 'expiry_date' not in user: return False
+        
         expiry = user['expiry_date']
+        # যদি তারিখ স্ট্রিং হিসেবে থাকে তবে তাকে ড্যাটটাইম অবজেক্টে রূপান্তর
+        if isinstance(expiry, str):
+            try:
+                expiry = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
+            except:
+                return False
+                
         return expiry > datetime.now()
 
     def add_user(self, user_id: int, name: str, days: int):
