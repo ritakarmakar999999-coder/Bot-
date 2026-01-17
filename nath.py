@@ -89,7 +89,7 @@ async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, cha
 async def download_video(client: Client, message: Message, url, prog):
     name = f"vid_{int(time.time())}"
     filename = f"{name}.mp4"
-    
+
         cmd = (
         f'yt-dlp -o "{filename}" "{url}" '
         f'--concurrent-fragments 10 '
@@ -98,7 +98,6 @@ async def download_video(client: Client, message: Message, url, prog):
         f'--downloader-args "aria2c: -x 16 -j 16 -s 16" '
         f'--no-check-certificate'
     )
-
     await prog.edit(f"🚀 **সুপার ফাস্ট ডাউনলোড হচ্ছে...**")
 
     try:
