@@ -38,7 +38,6 @@ def split_large_video(file_path, max_size_mb=1900):
 
     for i in range(parts):
         output_file = f"{base_name}_part{i+1}.mp4"
-        # threads 0 দিলে সার্ভারের সব CPU কোর ব্যবহার হবে
         cmd = ["ffmpeg", "-y", "-i", file_path, "-ss", str(int(part_duration * i)), "-t", str(int(part_duration)), "-c", "copy", "-threads", "0", "-map", "0", output_file]
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if os.path.exists(output_file):
@@ -46,7 +45,7 @@ def split_large_video(file_path, max_size_mb=1900):
     return output_files
 
 # ৩. হাই-স্পিড আপলোড ও অটো-ফরওয়ার্ড
-async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, channel_id):
+async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, chat_id):
     try:
         temp_thumb = None
         if thumb in ["/d", "no"] or not os.path.exists(str(thumb)):
@@ -56,13 +55,13 @@ async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, cha
         else:
             thumbnail = thumb
 
-        reply = await bot.send_message(m.chat.id, f"⚡ **চ্যানেলে আপলোড হচ্ছে:** `{name}`")
+        reply = await bot.send_message(m.chat.id, f"⚡ **আপলোড হচ্ছে:** `{name}`")
         dur = int(get_duration(filename))
         start_time = time.time()
 
-        # সরাসরি নির্ধারিত চ্যানেলে আপলোড
-        sent_video = await bot.send_video(
-            chat_id=channel_id,
+        # সরাসরি ইউজারের কাছে পাঠানো
+        await bot.send_video(
+            chat_id=chat_id,
             video=filename,
             caption=cc,
             supports_streaming=True,
@@ -72,12 +71,8 @@ async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, cha
             progress_args=(reply, start_time)
         )
         
-        # আপলোড শেষে ভিডিওটি ব্যবহারকারীর কাছে কপি পাঠানো
-        await sent_video.copy(m.chat.id, caption=cc)
-
         if os.path.exists(filename): os.remove(filename)
         if temp_thumb and os.path.exists(temp_thumb): os.remove(temp_thumb)
-        
         try: await reply.delete()
         except: pass
         return True
@@ -101,17 +96,13 @@ async def download_video(client: Client, message: Message, url, prog):
     await prog.edit(f"🚀 **ডাউনলোড শুরু হচ্ছে...**")
 
     try:
-        process = await asyncio.create_subprocess_shell(
-            cmd, 
-            stdout=asyncio.subprocess.PIPE, 
-            stderr=asyncio.subprocess.PIPE
-        )
+        process = await asyncio.create_subprocess_shell(cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         await process.communicate()
         
         if os.path.exists(filename):
             caption = f"✅ **ফাইল:** `{name}`\n🌟 @{BOT_USERNAME}"
             
-            # সরাসরি ইউজারের কাছে পাঠানোর জন্য LOG_CHANNEL বাদ দেওয়া হয়েছে
+            # সরাসরি আপনার ইনবক্সে পাঠানোর লজিক
             if os.path.getsize(filename) > 1900 * 1024 * 1024:
                 parts = split_large_video(filename)
                 for part in parts:
@@ -126,4 +117,3 @@ async def download_video(client: Client, message: Message, url, prog):
     except Exception as e:
         await prog.edit(f"❌ **সিস্টেম এরর:** {e}")
     return None
-    
