@@ -1,32 +1,24 @@
 import os
-from os import environ
+from os import getenv
 
-# 🛰️ API Configuration - Render-এর Environment থেকে আসবে
-API_ID = int(os.environ.get("API_ID"))
-API_HASH = os.environ.get("API_HASH")
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+# 🔐 API & Bot Credentials (Render-এর Environment Variables থেকে আসবে)
+API_ID = int(getenv("API_ID", "0")) 
+API_HASH = getenv("API_HASH", "")
+BOT_TOKEN = getenv("BOT_TOKEN", "")
 
-# 🍃 MongoDB Configuration
-DATABASE_URL = os.environ.get("DATABASE_URL")
-MONGO_URL = DATABASE_URL
+# 🤖 Bot Username (লগের ImportError ঠিক করার জন্য)
+BOT_USERNAME = getenv("BOT_USERNAME", "MyMyMyMyisnothingbhaibot")
 
-# 👑 Owner and Admin Configuration
-# আপনার টেলিগ্রাম আইডি Render-এ OWNER_ID হিসেবে দিতে হবে
-OWNER_ID = int(os.environ.get("OWNER_ID"))
-# অ্যাডমিন লিস্ট - ডিফল্ট হিসেবে মালিকের আইডি থাকবে
-ADMINS = [int(x) for x in os.environ.get("ADMINS", str(OWNER_ID)).split()]
+# 🗄️ Database URL
+MONGO_URL = getenv("MONGO_URL", "")
 
-# 🌐 Web Server Configuration (Render-এর জন্য)
-WEB_SERVER = os.environ.get("WEB_SERVER", "False").lower() == "true"
-PORT = int(os.environ.get("PORT", 8080))
+# 👤 Admin & Sudo Users
+OWNER_ID = int(getenv("OWNER_ID", "123456789")) 
 
-# 🏷️ Bot Branding
-BOT_USERNAME = "@MyMyMyMyisnothingbhaibot"
-CREDIT = "MyPrivateBot"
+# 🖼️ Logos & Pics (নতুন এরর 'photologo' ফিক্স করার জন্য)
+# আপনার পছন্দের কোনো ছবির লিঙ্ক এখানে দিতে পারেন
+START_PIC = getenv("START_PIC", "https://telegra.ph/file/default.jpg")
+photologo = getenv("photologo", "https://telegra.ph/file/default.jpg")
 
-# 💬 Message Formats
-AUTH_MESSAGES = {
-    "subscription_active": "<b>✅ Subscription Activated!</b>",
-    "subscription_expired": "<b>⚠️ Your Subscription Has Ended!</b>",
-    "access_denied": "<b>❌ Access Denied!</b>"
-}
+# 📁 Extra Settings
+LOG_GROUP = int(getenv("LOG_GROUP", "0"))
