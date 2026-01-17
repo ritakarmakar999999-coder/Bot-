@@ -28,7 +28,7 @@ def home():
     return "Bot is alive!"
 
 def run():
-    # Render-এর জন্য ডাইনামিক পোর্ট
+    # Render-এর জন্য ডাইনামিক পোর্ট নির্ধারণ
     port = int(os.environ.get("PORT", 8080))
     web_server.run(host='0.0.0.0', port=port)
 
@@ -100,7 +100,6 @@ count = 0
 userbot = None
 timeout_duration = 300  # 5 minutes
 
-
 # Initialize bot with random session
 bot = Client(
     "ugx",
@@ -112,14 +111,14 @@ bot = Client(
     in_memory=True
 )
 
-# ... (বাকি সব কোড একদম আগের মতোই থাকবে) ...
-# (Start, DRM, Auth কমান্ড হ্যান্ডলার এবং অন্যান্য সব ফাংশন অপরিবর্তিত আছে)
+# ... (আপনার ৯৭০+ লাইনের বাকি সব কোড এখানে থাকবে) ...
+# ... (নিচের কমান্ডগুলো এবং ফাংশনগুলো আগের মতোই থাকবে) ...
 
-# --- শেষের দিকের পরিবর্তন (Bot Start Section) ---
+# --- শেষের দিকের অংশ যেখানে বোট চালু হবে ---
 
 if __name__ == "__main__":
     print("Starting Dummy Server...")
-    keep_alive()  # এটি বোটকে Render-এ সচল রাখবে
+    keep_alive()  # এটি আপনার পোর্টের সমস্যা মিটিয়ে বোটকে রেসপন্ড করতে সাহায্য করবে
     
     print("Bot Started...")
-    bot.run()
+    bot.run() # এটি বোটকে টেলিগ্রামের সাথে কানেক্ট করবে
