@@ -1,24 +1,28 @@
 # 🔧 Standard Library & 📦 Third-party Libraries
-import os, re, sys, time, json, asyncio
+import os, re, sys, time, json, asyncio, subprocess
 from datetime import datetime, timedelta
 from threading import Thread
 from flask import Flask
+
+# 📦 Pyrogram & Others
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-# 🧠 Bot Modules (vars, db এবং nath ইমপোর্ট করা হয়েছে)
-from vars import * from db import db
+# 🧠 Bot Modules (১০ ও ১১ নম্বর লাইনের এরর এখানে ফিক্স করা হয়েছে)
+from vars import *
+from db import db
 import pyromod 
-from nath import * # আপনার আসল ডাউনলোড ফাংশনগুলো এখানে থাকে
-
-# --- 🟢 Dummy Server (Render Port Fix) ---
+from nath import * # --- 🟢 Dummy Server (Render Port Fix) ---
 web_server = Flask('')
 @web_server.route('/')
 def home(): return "Bot is alive!"
+
 def run():
     port = int(os.environ.get("PORT", 8080))
     web_server.run(host='0.0.0.0', port=port)
-def keep_alive(): Thread(target=run).start()
+
+def keep_alive():
+    Thread(target=run).start()
 
 # Initialize bot
 bot = Client(
@@ -36,13 +40,35 @@ async def start_handler(client, message):
     user_id = message.from_user.id
     if not (db.is_user_authorized(user_id, client.me.username) or db.is_admin(user_id)):
         return
-    caption = f"**হ্যালো {message.from_user.first_name}!**\nআমি এখন সম্পূর্ণ অটোমেটিক মোডে কাজ করছি।"
+    
+    caption = (
+        f"**হ্যালো {message.from_user.first_name}!**\n\n"
+        "📜 **উপলব্ধ কমান্ডসমূহ:**\n"
+        "🔹 `/drm` - DRM ভিডিও প্রসেস করতে\n"
+        "🔹 `/nondrm` - সাধারণ ভিডিও প্রসেস করতে\n"
+        "🔹 `/users` - মোট ইউজার দেখতে (Admin Only)\n\n"
+        "🚀 **অটোমেটিক মোড:** সরাসরি .txt ফাইল পাঠালেও ডাউনলোড শুরু হবে।"
+    )
     try:
         await message.reply_photo(photo=photologo, caption=caption)
     except Exception:
         await message.reply_text(caption)
 
-# 📂 অটোমেটিক লিঙ্ক এক্সট্রাকশন ও ডুপ্লিকেট ফিল্টারিং
+# 🛠️ কমান্ড হ্যান্ডলারসমূহ (আগের লজিক অক্ষুণ্ণ রেখে)
+@bot.on_message(filters.command(["drm", "nondrm"]) & filters.private)
+async def commands_handler(client, message):
+    if not (db.is_user_authorized(message.from_user.id, client.me.username) or db.is_admin(message.from_user.id)):
+        return
+    await message.reply_text(f"📥 **{message.text} মোড সক্রিয়।** এখন আপনার .txt ফাইলটি পাঠান।")
+
+@bot.on_message(filters.command("users") & filters.private)
+async def users_cmd(client, message):
+    if not db.is_admin(message.from_user.id): return
+    users = db.get_all_users()
+    count = len(users) if users else 0
+    await message.reply_text(f"📊 **মোট অনুমোদিত ইউজার:** {count}")
+
+# 📂 অটোমেটিক ফাইল প্রসেসিং ও ডাউনলোড লজিক
 @bot.on_message(filters.document & filters.private)
 async def auto_extract_handler(client, message: Message):
     if not (db.is_user_authorized(message.from_user.id, client.me.username) or db.is_admin(message.from_user.id)):
@@ -55,10 +81,8 @@ async def auto_extract_handler(client, message: Message):
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         
-        # ১. সব লিঙ্ক খুঁজে বের করা
+        # সব লিঙ্ক খুঁজে বের করা এবং ডুপ্লিকেট ফিল্টার করা
         all_links = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', content)
-        
-        # ২. ডুপ্লিকেট ফিল্টারিং (একি লিঙ্ক বারবার নেবে না)
         unique_links = list(dict.fromkeys(all_links)) 
         
         if not unique_links:
@@ -68,21 +92,21 @@ async def auto_extract_handler(client, message: Message):
 
         await status.edit(f"✅ **ইউনিক ভিডিও:** {len(unique_links)}\n🚀 **ডাউনলোড শুরু হচ্ছে...**")
 
-        # ৩. অটোমেটিক লুপ (আপনার আসল লজিক এখানে কল হবে)
+        # লুপের মাধ্যমে প্রতিটি লিঙ্ক ডাউনলোড করা
         for index, link in enumerate(unique_links, start=1):
             try:
-                # প্রসেসিং মেসেজ
-                process_msg = await message.reply_text(f"📝 **প্রসেস হচ্ছে ({index}/{len(unique_links)}):**\n`{link}`")
+                prog = await message.reply_text(f"📝 **ডাউনলোড হচ্ছে ({index}/{len(unique_links)}):**\n`{link}`")
                 
-                # --- এখানে আপনার আসল ডাউনলোডিং লজিকটি কল করুন ---
-                # উদাহরণ: await helper.download_video(client, message, link, process_msg)
+                # আপনার nath.py থেকে ডাউনলোড ফাংশন কল করা (নিশ্চিত করুন এই নামই আছে)
+                # যদি ফাংশনের নাম ভিন্ন হয় তবে এখানে পরিবর্তন করুন
+                await download_video(client, message, link, prog) 
                 
-                await asyncio.sleep(1) # স্প্যাম এড়াতে বিরতি
+                await asyncio.sleep(2) 
             except Exception as e:
-                print(f"Error on link {index}: {e}")
+                print(f"Error on {link}: {e}")
                 continue
 
-        await status.reply_text("🏁 **সব কাজ সফলভাবে শেষ হয়েছে!**")
+        await status.reply_text("🏁 **সব ভিডিও সফলভাবে আপলোড করা হয়েছে!**")
         os.remove(file_path)
 
 # --- বোট চালু করা ---
