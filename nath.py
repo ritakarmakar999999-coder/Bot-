@@ -90,9 +90,10 @@ async def download_video(client: Client, message: Message, url, prog):
     name = f"vid_{int(time.time())}"
     filename = f"{name}.mp4"
     
-    cmd = (
+        cmd = (
         f'yt-dlp -o "{filename}" "{url}" '
-        f'--concurrent-fragments 10 ' 
+        f'--concurrent-fragments 10 '
+        f'--fragment-retries 25 '
         f'--external-downloader aria2c '
         f'--downloader-args "aria2c: -x 16 -j 16 -s 16" '
         f'--no-check-certificate'
