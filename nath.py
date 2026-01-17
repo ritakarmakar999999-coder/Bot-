@@ -96,9 +96,9 @@ async def download_video(client: Client, message: Message, url, prog):
         f'--external-downloader aria2c '
         f'--downloader-args "aria2c: -x 16 -j 16 -s 16" '
         f'--no-check-certificate'
-        )
+    )
 
-    await prog.edit(f"🚀 **সুপার ফাস্ট ডাউনলোড হচ্ছে...**")
+    await prog.edit(f"🚀 **ডাউনলোড শুরু হচ্ছে...**")
 
     try:
         process = await asyncio.create_subprocess_shell(
@@ -110,15 +110,15 @@ async def download_video(client: Client, message: Message, url, prog):
         
         if os.path.exists(filename):
             caption = f"✅ **ফাইল:** `{name}`\n🌟 @{BOT_USERNAME}"
-            target_chat = LOG_CHANNEL 
-
+            
+            # সরাসরি ইউজারের কাছে পাঠানোর জন্য LOG_CHANNEL বাদ দেওয়া হয়েছে
             if os.path.getsize(filename) > 1900 * 1024 * 1024:
                 parts = split_large_video(filename)
                 for part in parts:
-                    await send_vid(client, message, caption, part, "no", name, prog, target_chat)
+                    await send_vid(client, message, caption, part, "no", name, prog, message.chat.id)
                 if os.path.exists(filename): os.remove(filename)
             else:
-                await send_vid(client, message, caption, filename, "no", name, prog, target_chat)
+                await send_vid(client, message, caption, filename, "no", name, prog, message.chat.id)
             
             try: await prog.delete()
             except: pass
@@ -126,3 +126,4 @@ async def download_video(client: Client, message: Message, url, prog):
     except Exception as e:
         await prog.edit(f"❌ **সিস্টেম এরর:** {e}")
     return None
+    
