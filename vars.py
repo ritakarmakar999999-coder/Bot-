@@ -1,24 +1,21 @@
 import os
 from os import getenv
 
-# 🔐 API & Bot Credentials (Render-এর Environment Variables থেকে আসবে)
+# 🔐 API & Bot Credentials
 API_ID = int(getenv("API_ID", "0")) 
 API_HASH = getenv("API_HASH", "")
 BOT_TOKEN = getenv("BOT_TOKEN", "")
 
-# 🤖 Bot Username (লগের ImportError ঠিক করার জন্য)
+# 🤖 Bot Username
 BOT_USERNAME = getenv("BOT_USERNAME", "MyMyMyMyisnothingbhaibot")
 
 # 🗄️ Database URL
 MONGO_URL = getenv("MONGO_URL", "")
 
 # 👤 Admin & Sudo Users
-OWNER_ID = int(getenv("OWNER_ID", "")) 
+OWNER_ID = int(getenv("OWNER_ID", "123456789")) 
 
-# 🖼️ Logos & Pics (নতুন এরর 'photologo' ফিক্স করার জন্য)
-# আপনার পছন্দের কোনো ছবির লিঙ্ক এখানে দিতে পারেন
-
-
-# 📁 Extra Settings
-LOG_GROUP = int(getenv("LOG_GROUP", "0"))
-
+# 🖼️ Logos & Pics (এগুলো থাকলে কোড এরর দেবে না)
+# আপনার নিজের ছবি না থাকলেও এই লিঙ্কগুলো কোডকে সচল রাখবে
+START_PIC = getenv("START_PIC", "https://telegra.ph/file/default.jpg")
+photologo = getenv("photologo", "https://telegra.ph/file/default.jpg")
