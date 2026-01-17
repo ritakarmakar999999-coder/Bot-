@@ -12,8 +12,6 @@ from vars import *
 
 # 🌍 Load Environment Variables
 MONGO_URL = os.environ.get("MONGO_URL")
-if not MONGO_URL:
-    raise ValueError("❌ MONGO_URL not found in Render Environment Variables!")
 
 class Database:
     def __init__(self, max_retries: int = 3, retry_delay: float = 2.0):
@@ -30,15 +28,17 @@ class Database:
             try:
                 print(f"{Fore.YELLOW}⌛ Attempt {attempt}/{max_retries}: Connecting to MongoDB...{Style.RESET_ALL}")
                 
+                # 🛑 এখানে SSL ফিক্স যোগ করা হয়েছে
                 self.client = MongoClient(
                     MONGO_URL,
                     serverSelectionTimeoutMS=20000,
+                    tls=True,
+                    tlsAllowInvalidCertificates=True,  # এটি SSL হ্যান্ডশেক এরর এড়িয়ে যাবে
                     tlsCAFile=certifi.where(),
                     retryWrites=True
                 )
                 
                 self.client.server_info()
-                # 🛠️ আপনার নিজস্ব ডাটাবেস নাম
                 self.db = self.client.get_database('My_Private_Bot_DB')
                 self.users = self.db['users']
                 self.settings = self.db['user_settings']
@@ -55,7 +55,6 @@ class Database:
                     raise ConnectionError(f"Failed to connect after {max_retries} attempts")
 
     def _print_startup_message(self):
-        # 🛡️ এখানে আপনার নতুন বটের নাম সেট করা হয়েছে
         bot_display_name = "@MyMyMyMyisnothingbhaibot"
         print(f"\n{Fore.CYAN}{'='*50}")
         print(f"🚀 {bot_display_name} - Database Initialization")
@@ -68,8 +67,6 @@ class Database:
         except: pass
 
     def is_user_authorized(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot") -> bool:
-        """Check user authorization status"""
-        # 👑 OWNER_ID এবং ADMINS (vars.py থেকে) থাকলে সরাসরি এক্সেস পাবে
         if user_id == OWNER_ID or user_id in ADMINS:
             return True
         user = self.users.find_one({"user_id": user_id, "bot_username": bot_username})
@@ -84,7 +81,6 @@ class Database:
         return expiry > datetime.now()
 
     def add_user(self, user_id: int, name: str, days: int, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
-        """Add or update a user"""
         expiry_date = datetime.now() + timedelta(days=days)
         self.users.update_one(
             {"user_id": user_id, "bot_username": bot_username},
@@ -94,11 +90,9 @@ class Database:
         return True, expiry_date
 
     def list_users(self, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
-        """List all users for the bot"""
         return list(self.users.find({"bot_username": bot_username}))
 
     def get_user_expiry_info(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
-        """Get detailed expiry info for a user"""
         user = self.users.find_one({"user_id": user_id, "bot_username": bot_username})
         if not user or 'expiry_date' not in user: return None
         expiry = user['expiry_date']
@@ -107,11 +101,9 @@ class Database:
         return {"name": user.get('name'), "expiry_date": expiry.strftime("%d-%m-%Y"), "is_active": expiry > datetime.now()}
 
     def is_admin(self, user_id: int) -> bool:
-        """Check if user is owner or admin"""
         return user_id == OWNER_ID or user_id in ADMINS
 
     def close(self):
-        """Close connection"""
         if self.client:
             self.client.close()
 
