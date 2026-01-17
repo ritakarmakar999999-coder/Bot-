@@ -15,8 +15,6 @@ MONGO_URL = os.environ.get("MONGO_URL")
 
 class Database:
     def __init__(self, max_retries: int = 3, retry_delay: float = 2.0):
-        """Initialize MongoDB connection with retry logic"""
-        self._print_startup_message()
         self.client: Optional[MongoClient] = None
         self.db: Optional[MongoDatabase] = None
         self.users: Optional[Collection] = None
@@ -28,12 +26,12 @@ class Database:
             try:
                 print(f"{Fore.YELLOW}⌛ Attempt {attempt}/{max_retries}: Connecting to MongoDB...{Style.RESET_ALL}")
                 
-                # 🛑 এখানে SSL ফিক্স যোগ করা হয়েছে
+                # 🛠️ SSL এরর ফিক্স করার জন্য প্যারামিটার যোগ করা হয়েছে
                 self.client = MongoClient(
                     MONGO_URL,
                     serverSelectionTimeoutMS=20000,
                     tls=True,
-                    tlsAllowInvalidCertificates=True,  # এটি SSL হ্যান্ডশেক এরর এড়িয়ে যাবে
+                    tlsAllowInvalidCertificates=True, # এটি SSL এরর সমাধান করবে
                     tlsCAFile=certifi.where(),
                     retryWrites=True
                 )
@@ -44,72 +42,33 @@ class Database:
                 self.settings = self.db['user_settings']
                 
                 print(f"{Fore.GREEN}✓ MongoDB Connected Successfully!{Style.RESET_ALL}")
-                self._initialize_database()
                 return
                 
             except Exception as e:
-                print(f"{Fore.RED}✕ Connection attempt {attempt} failed: {str(e)}{Style.RESET_ALL}")
+                print(f"{Fore.RED}✕ Connection failed: {str(e)}{Style.RESET_ALL}")
                 if attempt < max_retries:
                     time.sleep(retry_delay)
                 else:
-                    raise ConnectionError(f"Failed to connect after {max_retries} attempts")
-
-    def _print_startup_message(self):
-        bot_display_name = "@MyMyMyMyisnothingbhaibot"
-        print(f"\n{Fore.CYAN}{'='*50}")
-        print(f"🚀 {bot_display_name} - Database Initialization")
-        print(f"{'='*50}{Style.RESET_ALL}\n")
-
-    def _initialize_database(self):
-        try:
-            self.users.create_index([("bot_username", 1), ("user_id", 1)], unique=True)
-            self.settings.create_index([("user_id", 1)], unique=True)
-        except: pass
+                    raise ConnectionError("Could not connect to MongoDB.")
 
     def is_user_authorized(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot") -> bool:
-        if user_id == OWNER_ID or user_id in ADMINS:
-            return True
-        user = self.users.find_one({"user_id": user_id, "bot_username": bot_username})
-        if not user or 'expiry_date' not in user:
-            return False
-        
+        if user_id == OWNER_ID or user_id in ADMINS: return True
+        user = self.users.find_one({"user_id": user_id})
+        if not user or 'expiry_date' not in user: return False
         expiry = user['expiry_date']
-        if isinstance(expiry, str):
-            try:
-                expiry = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
-            except: return False
         return expiry > datetime.now()
 
-    def add_user(self, user_id: int, name: str, days: int, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
+    def add_user(self, user_id: int, name: str, days: int):
         expiry_date = datetime.now() + timedelta(days=days)
         self.users.update_one(
-            {"user_id": user_id, "bot_username": bot_username},
-            {"$set": {"name": name, "expiry_date": expiry_date, "added_date": datetime.now()}},
+            {"user_id": user_id},
+            {"$set": {"name": name, "expiry_date": expiry_date}},
             upsert=True
         )
         return True, expiry_date
 
-    def list_users(self, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
-        return list(self.users.find({"bot_username": bot_username}))
-
-    def get_user_expiry_info(self, user_id: int, bot_username: str = "@MyMyMyMyisnothingbhaibot"):
-        user = self.users.find_one({"user_id": user_id, "bot_username": bot_username})
-        if not user or 'expiry_date' not in user: return None
-        expiry = user['expiry_date']
-        if isinstance(expiry, str):
-            expiry = datetime.strptime(expiry, "%Y-%m-%d %H:%M:%S")
-        return {"name": user.get('name'), "expiry_date": expiry.strftime("%d-%m-%Y"), "is_active": expiry > datetime.now()}
-
     def is_admin(self, user_id: int) -> bool:
         return user_id == OWNER_ID or user_id in ADMINS
 
-    def close(self):
-        if self.client:
-            self.client.close()
-
-# ☁ Final Initialization
-try:
-    db = Database()
-except Exception as e:
-    print(f"Fatal Error: {e}")
-    raise
+# DB Instance
+db = Database()
