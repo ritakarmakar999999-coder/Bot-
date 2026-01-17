@@ -18,8 +18,10 @@ ADMINS = [OWNER_ID] # এই লাইনটি 'ADMINS' এরর ফিক্�
 
 # 🖼️ Logos & Pics
 START_PIC = getenv("START_PIC", "https://telegra.ph/file/default.jpg")
-photologo = getenv("photologo", "https://telegra.ph/file/default.jpg")
+photologo = getenv("photologo", "https://graph.org/file/f70445d06b6b72d80c653.jpg") 
+# উপরের লিঙ্কটি কার্যকর, এটি দিলে আর ছবির এরর আসবে না
 
 # 💳 Credit & Extra
 CREDIT = getenv("CREDIT", "Nath")
 LOG_GROUP = int(getenv("LOG_GROUP", "0"))
+
