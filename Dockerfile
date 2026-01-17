@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ডিপেন্ডেন্সি ইনস্টল
-COPY itsgolubots.txt .
-RUN pip install --no-cache-dir -r itsgolubots.txt
+COPY nath.txt .
+RUN pip install --no-cache-dir -r nath.txt
 
 COPY . .
 
