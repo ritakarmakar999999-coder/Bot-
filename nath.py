@@ -84,13 +84,13 @@ async def send_vid(bot: Client, m: Message, cc, filename, thumb, name, prog, cha
 async def download_video(client: Client, message: Message, url, prog):
     name = f"vid_{int(time.time())}"
     filename = f"{name}.mp4"
-    cmd = (
+        cmd = (
         f'yt-dlp -o "{filename}" "{url}" '
+        f'--add-header "Authorization:Bearer {JWT_TOKEN}" '
+        f'--add-header "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" '
         f'--concurrent-fragments 10 '
-        f'--fragment-retries 25 '
-        f'--external-downloader aria2c '
-        f'--downloader-args "aria2c: -x 16 -j 16 -s 16" '
-        f'--no-check-certificate'
+        f'--no-check-certificate '
+        f'--fixup never'
     )
 
     await prog.edit(f"🚀 **ডাউনলোড শুরু হচ্ছে...**")
